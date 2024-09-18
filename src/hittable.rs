@@ -1,11 +1,15 @@
+use std::rc::Rc;
+
 use crate::interval::Interval;
+use crate::material::Material;
 use crate::ray::Ray;
 use crate::vector::{Point, Vector};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct HitRecord {
-    p: Point,
+    pub p: Point,
     pub normal: Vector,
+    pub material: Option<Rc<dyn Material>>,
     t: f64,
     front_face: bool,
 }
@@ -15,6 +19,7 @@ impl HitRecord {
         HitRecord {
             p: Point::zero(),
             normal: Vector::zero(),
+            material: None,
             t: 0.0,
             front_face: false,
         }
@@ -37,11 +42,17 @@ pub trait Hittable {
 pub struct Sphere {
     center: Point,
     radius: f64,
+    pub material: Option<Rc<dyn Material>>,
 }
 
 impl Sphere {
-    pub fn new(center: Point, radius: f64) -> Self {
-        Sphere { center, radius }
+    pub fn new(center: Point, radius: f64, material: Option<Rc<dyn Material>>) -> Self {
+        // todo material
+        Sphere {
+            center,
+            radius,
+            material,
+        }
     }
 }
 
@@ -69,6 +80,7 @@ impl Hittable for Sphere {
         rec.p = r.at(rec.t);
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(r, outward_normal);
+        rec.material = self.material.clone();
         return true;
     }
 }
@@ -103,7 +115,7 @@ impl Hittable for HittableList {
             if object.hit(r, Interval::new(ray_t.min, closest), &mut tmp_record) {
                 hit_anything = true;
                 closest = tmp_record.t;
-                *rec = tmp_record;
+                *rec = tmp_record.clone();
             }
         }
 

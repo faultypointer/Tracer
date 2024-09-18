@@ -1,5 +1,8 @@
+use core::f64;
 use std::fmt;
 use std::ops::{self, MulAssign};
+
+use crate::rtweeknd;
 
 #[derive(Clone, Copy)]
 pub struct Vector {
@@ -36,6 +39,47 @@ impl Vector {
 
     pub fn unit(&self) -> Self {
         *self / self.length()
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        f64::abs(self.e[0]) < s && f64::abs(self.e[1]) < s && f64::abs(self.e[2]) < s
+    }
+}
+
+impl Vector {
+    pub fn random() -> Self {
+        Vector {
+            e: [rtweeknd::random(), rtweeknd::random(), rtweeknd::random()],
+        }
+    }
+    pub fn random_in_range(min: f64, max: f64) -> Self {
+        Vector {
+            e: [
+                rtweeknd::random_in_range(min, max),
+                rtweeknd::random_in_range(min, max),
+                rtweeknd::random_in_range(min, max),
+            ],
+        }
+    }
+
+    pub fn random_unit_vector() -> Self {
+        loop {
+            let p = Self::random_in_range(-1.0, 1.0);
+            let len_p = p.length_squared();
+            if len_p > 1e-160 && len_p <= 1.0 {
+                return p / f64::sqrt(len_p);
+            }
+        }
+    }
+
+    pub fn random_on_hemisphere(normal: &Vector) -> Self {
+        let on_unit_sphere = Self::random_unit_vector();
+        if Vector::dot(on_unit_sphere, *normal) > 0.0 {
+            return on_unit_sphere;
+        } else {
+            return -on_unit_sphere;
+        }
     }
 }
 
@@ -154,6 +198,10 @@ impl Vector {
                 lhs.e[0] * rhs.e[1] - lhs.e[1] * rhs.e[0],
             ],
         }
+    }
+
+    pub fn reflect(v: Self, n: Self) -> Self {
+        v - 2.0 * Self::dot(v, n) * n
     }
 }
 
