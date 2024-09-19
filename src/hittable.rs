@@ -10,8 +10,8 @@ pub struct HitRecord {
     pub p: Point,
     pub normal: Vector,
     pub material: Option<Rc<dyn Material>>,
-    t: f64,
-    front_face: bool,
+    pub t: f64,
+    pub front_face: bool,
 }
 
 impl HitRecord {
@@ -26,8 +26,8 @@ impl HitRecord {
     }
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: Vector) {
         // outward_normal is a unit Vector
-        let front_face = Vector::dot(r.direction(), outward_normal) < 0.0;
-        if front_face {
+        self.front_face = Vector::dot(r.direction(), outward_normal) < 0.0;
+        if self.front_face {
             self.normal = outward_normal;
         } else {
             self.normal = -outward_normal;

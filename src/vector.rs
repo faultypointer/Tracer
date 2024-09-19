@@ -1,4 +1,3 @@
-use core::f64;
 use std::fmt;
 use std::ops::{self, MulAssign};
 
@@ -79,6 +78,19 @@ impl Vector {
             return on_unit_sphere;
         } else {
             return -on_unit_sphere;
+        }
+    }
+
+    pub fn random_in_unit_disk() -> Self {
+        loop {
+            let p = Vector::new(
+                rtweeknd::random_in_range(-1.0, 1.0),
+                rtweeknd::random_in_range(-1.0, 1.0),
+                0.0,
+            );
+            if p.length_squared() < 1.0 {
+                return p;
+            }
         }
     }
 }
@@ -202,6 +214,12 @@ impl Vector {
 
     pub fn reflect(v: Self, n: Self) -> Self {
         v - 2.0 * Self::dot(v, n) * n
+    }
+    pub fn refract(uv: &Vector, n: &Vector, etai_over_etat: f64) -> Vector {
+        let cos_theta = Self::dot(-(*uv), *n).min(1.0);
+        let r_out_prep = etai_over_etat * (*uv + cos_theta * (*n));
+        let r_out_parallel = -f64::sqrt(f64::abs(1.0 - r_out_prep.length_squared())) * (*n);
+        r_out_prep + r_out_parallel
     }
 }
 
