@@ -57,7 +57,7 @@ fn main() {
     let mat3 = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
     world.add(Sphere::new(Point::new(4.0, 1.0, 0.0), 1.0, Some(mat3)));
 
-    let mut cam = Camera::new(16.0 / 9.0, 200, 100, 20.0);
+    let mut cam = Camera::new(16.0 / 9.0, 1200, 100, 20.0);
     cam.max_depth = 50;
     cam.lookfrom = Point::new(13.0, 2.0, 3.0);
     cam.lookat = Point::new(0.0, 0.0, 0.0);
