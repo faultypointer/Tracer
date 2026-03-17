@@ -1,4 +1,4 @@
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+// use rayon::iter::{IntoParallelIterator, ParallelExtend, ParallelIterator};
 
 use crate::color::{self, Color};
 use crate::hittable::{HitRecord, Hittable};
@@ -8,10 +8,11 @@ use crate::rtweeknd::{self, INF};
 use crate::vector::{Point, Vector};
 
 use std::io;
+use std::sync::{Arc, Mutex};
 
 pub struct Camera {
     // aspect_ratio: f64,
-    pub image_width: u32,
+    pub image_width: usize,
     pub max_depth: u32,
     pub vfov: f64,
     pub lookfrom: Point,
@@ -19,9 +20,9 @@ pub struct Camera {
     pub vup: Vector,
     pub defocus_angle: f64,
     pub focus_dist: f64,
-    samples_per_pixel: u32,
+    samples_per_pixel: usize,
     pixel_samples_scale: f64,
-    image_height: u32,
+    image_height: usize,
     center: Point,
     pixel00_loc: Point,
     pixel_delta_u: Vector,
@@ -35,7 +36,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, vfov: f64) -> Self {
+    pub fn new(aspect_ratio: f64, image_width: usize, samples_per_pixel: usize, vfov: f64) -> Self {
         Camera {
             // aspect_ratio,
             image_width,
@@ -48,7 +49,7 @@ impl Camera {
             focus_dist: 10.0,
             samples_per_pixel,
             pixel_samples_scale: 1.0 / 10.0,
-            image_height: ((image_width as f64 / aspect_ratio) as u32).max(1),
+            image_height: ((image_width as f64 / aspect_ratio) as usize).max(1),
             center: Point::new(0.0, 0.0, 0.0),
             pixel00_loc: Point::new(0.0, 0.0, 0.0),
             pixel_delta_u: Vector::new(0.0, 0.0, 0.0),
@@ -89,34 +90,69 @@ impl Camera {
         self.defocus_disk_u = self.u * defocus_radius;
         self.defocus_disk_v = self.v * defocus_radius;
     }
+    // pub fn render<T: Hittable>(&self, world: &T) {
+    //     println!("P3");
+    //     println!("{} {}", self.image_width, self.image_height);
+    //     println!("255");
+
+    //     let pixels: Vec<Color> = (0..self.image_height)
+    //         .into_par_iter()
+    //         .flat_map(|j| {
+    //             // eprint!("\rScanlines remaining: {} ", self.image_height - j);
+    //             // io::stderr().flush().unwrap();
+    //             (0..self.image_width)
+    //                 .map(move |i| {
+    //                     let mut color_pixel = Color::zero();
+    //                     for _ in 0..self.samples_per_pixel {
+    //                         let r = self.get_ray(i, j);
+    //                         color_pixel += self.ray_color(r, self.max_depth, world);
+    //                     }
+    //                     color_pixel * self.pixel_samples_scale
+    //                 })
+    //                 .collect::<Vec<_>>()
+    //         })
+    //         .collect();
+    //     for pixel in pixels {
+    //         color::write_color(&mut io::stdout(), pixel).unwrap();
+    //     }
+    //     // eprintln!("\nDone!")
+    // }
     pub fn render<T: Hittable>(&self, world: &T) {
         println!("P3");
         println!("{} {}", self.image_width, self.image_height);
         println!("255");
 
-        let pixels: Vec<Color> = (0..self.image_height)
-            .into_par_iter()
-            .flat_map(|j| {
+        let pixels = Arc::new(Mutex::new(vec![
+            Color::zero();
+            self.image_width * self.image_height
+        ]));
+
+        std::thread::scope(|s| {
+            for j in 0..self.image_height {
                 // eprint!("\rScanlines remaining: {} ", self.image_height - j);
                 // io::stderr().flush().unwrap();
-                (0..self.image_width)
-                    .map(move |i| {
+                let pixels = pixels.clone();
+                s.spawn(move || {
+                    for i in 0..self.image_width {
                         let mut color_pixel = Color::zero();
                         for _ in 0..self.samples_per_pixel {
                             let r = self.get_ray(i, j);
                             color_pixel += self.ray_color(r, self.max_depth, world);
                         }
-                        color_pixel * self.pixel_samples_scale
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect();
+                        let mut pixels = pixels.lock().unwrap();
+                        pixels[self.image_width * j + i] = color_pixel * self.pixel_samples_scale;
+                    }
+                });
+            }
+        });
+        let pixels = Arc::into_inner(pixels).unwrap().into_inner().unwrap();
         for pixel in pixels {
             color::write_color(&mut io::stdout(), pixel).unwrap();
         }
         // eprintln!("\nDone!")
     }
-    fn get_ray(&self, i: u32, j: u32) -> Ray {
+
+    fn get_ray(&self, i: usize, j: usize) -> Ray {
         let offset = self.sample_square();
         let pixel_sample = self.pixel00_loc
             + ((i as f64 + offset.x()) * self.pixel_delta_u)
