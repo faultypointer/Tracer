@@ -3,12 +3,12 @@ use rand::Rng;
 use crate::interval::Interval;
 
 pub const INF: f64 = f64::INFINITY;
-pub const PI: f64 = 3.1415926535897932385;
+// pub const PI: f64 = 3.141_592_653_589_793;
 
 pub const INTENSITY_INTERVAL: Interval = Interval::intensity_interval();
 
 pub fn deg2rad(degree: f64) -> f64 {
-    degree * PI / 180.0
+    degree * std::f64::consts::PI / 180.0
 }
 
 pub fn random() -> f64 {

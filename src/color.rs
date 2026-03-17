@@ -1,6 +1,6 @@
 use std::io::{self, Write};
 
-use crate::{interval::Interval, rtweeknd::INTENSITY_INTERVAL, vector::Vector};
+use crate::{rtweeknd::INTENSITY_INTERVAL, vector::Vector};
 
 pub type Color = Vector;
 

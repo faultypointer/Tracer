@@ -8,7 +8,7 @@ use crate::vector::{Point, Vector};
 use std::io::{self, Write};
 
 pub struct Camera {
-    pub aspect_ratio: f64,
+    // aspect_ratio: f64,
     pub image_width: u32,
     pub max_depth: u32,
     pub vfov: f64,
@@ -35,7 +35,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(aspect_ratio: f64, image_width: u32, samples_per_pixel: u32, vfov: f64) -> Self {
         Camera {
-            aspect_ratio,
+            // aspect_ratio,
             image_width,
             max_depth: 10,
             vfov,
@@ -127,7 +127,7 @@ impl Camera {
         Vector::new(rtweeknd::random() - 0.5, rtweeknd::random() - 0.5, 0.0)
     }
     fn ray_color<T: Hittable>(&self, r: Ray, depth: u32, world: &T) -> Color {
-        if depth <= 0 {
+        if depth == 0 {
             return Color::zero();
         }
         let mut rec = HitRecord::new();

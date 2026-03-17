@@ -81,7 +81,7 @@ impl Hittable for Sphere {
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(r, outward_normal);
         rec.material = self.material.clone();
-        return true;
+        true
     }
 }
 
@@ -96,9 +96,9 @@ impl HittableList {
         }
     }
 
-    pub fn clear(&mut self) {
-        self.objects.clear();
-    }
+    // pub fn clear(&mut self) {
+    //     self.objects.clear();
+    // }
 
     pub fn add<T: Hittable + 'static>(&mut self, object: T) {
         self.objects.push(Box::new(object));
