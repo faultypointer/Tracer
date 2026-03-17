@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::interval::Interval;
 use crate::material::Material;
@@ -9,7 +9,7 @@ use crate::vector::{Point, Vector};
 pub struct HitRecord {
     pub p: Point,
     pub normal: Vector,
-    pub material: Option<Rc<dyn Material>>,
+    pub material: Option<Arc<dyn Material>>,
     pub t: f64,
     pub front_face: bool,
 }
@@ -35,18 +35,18 @@ impl HitRecord {
     }
 }
 
-pub trait Hittable {
+pub trait Hittable: Send + Sync {
     fn hit(&self, r: &Ray, ray_t: Interval, rec: &mut HitRecord) -> bool;
 }
 
 pub struct Sphere {
     center: Point,
     radius: f64,
-    pub material: Option<Rc<dyn Material>>,
+    pub material: Option<Arc<dyn Material>>,
 }
 
 impl Sphere {
-    pub fn new(center: Point, radius: f64, material: Option<Rc<dyn Material>>) -> Self {
+    pub fn new(center: Point, radius: f64, material: Option<Arc<dyn Material>>) -> Self {
         // todo material
         Sphere {
             center,

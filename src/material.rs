@@ -3,7 +3,7 @@ use crate::vector::Vector;
 use crate::{color, rtweeknd};
 use crate::{color::Color, hittable::HitRecord};
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(
         &self,
         r_in: &Ray,

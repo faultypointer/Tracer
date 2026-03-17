@@ -7,7 +7,7 @@ mod ray;
 mod rtweeknd;
 mod vector;
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 use camera::Camera;
 use color::Color;
@@ -17,7 +17,7 @@ use vector::{Point, Vector};
 fn main() {
     let mut world = HittableList::new();
 
-    let ground = Rc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
+    let ground = Arc::new(Lambertian::new(Color::new(0.8, 0.8, 0.0)));
     world.add(Sphere::new(
         Point::new(0.0, -1000.0, 0.0),
         1000.0,
@@ -34,27 +34,27 @@ fn main() {
             );
 
             if (center - Point::new(4.0, 0.2, 0.0)).length() > 0.9 {
-                let sphere_mat: Rc<dyn Material> = if choose_mat < 0.8 {
-                    Rc::new(Lambertian::new(Color::random() * Color::random()))
+                let sphere_mat: Arc<dyn Material> = if choose_mat < 0.8 {
+                    Arc::new(Lambertian::new(Color::random() * Color::random()))
                 } else if choose_mat < 0.95 {
-                    Rc::new(Metal::new(
+                    Arc::new(Metal::new(
                         Color::random_in_range(0.5, 1.0),
                         rtweeknd::random_in_range(0.0, 0.5),
                     ))
                 } else {
-                    Rc::new(Dielectric::new(1.5))
+                    Arc::new(Dielectric::new(1.5))
                 };
                 world.add(Sphere::new(center, 0.2, Some(sphere_mat)));
             }
         }
     }
-    let mat1 = Rc::new(Dielectric::new(1.5));
+    let mat1 = Arc::new(Dielectric::new(1.5));
     world.add(Sphere::new(Point::new(0.0, 1.0, 0.0), 1.0, Some(mat1)));
 
-    let mat2 = Rc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
+    let mat2 = Arc::new(Lambertian::new(Color::new(0.4, 0.2, 0.1)));
     world.add(Sphere::new(Point::new(-4.0, 1.0, 0.0), 1.0, Some(mat2)));
 
-    let mat3 = Rc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
+    let mat3 = Arc::new(Metal::new(Color::new(0.7, 0.6, 0.5), 0.0));
     world.add(Sphere::new(Point::new(4.0, 1.0, 0.0), 1.0, Some(mat3)));
 
     let mut cam = Camera::new(16.0 / 9.0, 1200, 100, 20.0);

@@ -1,3 +1,5 @@
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
+
 use crate::color::{self, Color};
 use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
@@ -5,7 +7,7 @@ use crate::ray::Ray;
 use crate::rtweeknd::{self, INF};
 use crate::vector::{Point, Vector};
 
-use std::io::{self, Write};
+use std::io;
 
 pub struct Camera {
     // aspect_ratio: f64,
@@ -92,20 +94,27 @@ impl Camera {
         println!("{} {}", self.image_width, self.image_height);
         println!("255");
 
-        for j in 0..self.image_height {
-            eprint!("\rScanlines remaining: {} ", self.image_height - j);
-            io::stderr().flush().unwrap();
-            for i in 0..self.image_width {
-                let mut color_pixel = Color::zero();
-                for _ in 0..self.samples_per_pixel {
-                    let r = self.get_ray(i, j);
-                    color_pixel += self.ray_color(r, self.max_depth, world);
-                }
-                color::write_color(&mut io::stdout(), color_pixel * self.pixel_samples_scale)
-                    .unwrap();
-            }
+        let pixels: Vec<Color> = (0..self.image_height)
+            .into_par_iter()
+            .flat_map(|j| {
+                // eprint!("\rScanlines remaining: {} ", self.image_height - j);
+                // io::stderr().flush().unwrap();
+                (0..self.image_width)
+                    .map(move |i| {
+                        let mut color_pixel = Color::zero();
+                        for _ in 0..self.samples_per_pixel {
+                            let r = self.get_ray(i, j);
+                            color_pixel += self.ray_color(r, self.max_depth, world);
+                        }
+                        color_pixel * self.pixel_samples_scale
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        for pixel in pixels {
+            color::write_color(&mut io::stdout(), pixel).unwrap();
         }
-        eprintln!("\nDone!")
+        // eprintln!("\nDone!")
     }
     fn get_ray(&self, i: u32, j: u32) -> Ray {
         let offset = self.sample_square();
