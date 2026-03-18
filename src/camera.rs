@@ -5,6 +5,7 @@ use crate::hittable::{HitRecord, Hittable};
 use crate::interval::Interval;
 use crate::ray::Ray;
 use crate::rtweeknd::{self, INF};
+use crate::threadpool::Pool;
 use crate::vector::{Point, Vector};
 
 use std::io;
@@ -127,12 +128,14 @@ impl Camera {
             self.image_width * self.image_height
         ]));
 
-        std::thread::scope(|s| {
+        let mut tp = Pool::new(16);
+
+        tp.scoped(|s| {
             for j in 0..self.image_height {
                 // eprint!("\rScanlines remaining: {} ", self.image_height - j);
                 // io::stderr().flush().unwrap();
                 let pixels = pixels.clone();
-                s.spawn(move || {
+                s.execute(move || {
                     for i in 0..self.image_width {
                         let mut color_pixel = Color::zero();
                         for _ in 0..self.samples_per_pixel {

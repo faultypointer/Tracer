@@ -5,6 +5,7 @@ mod interval;
 mod material;
 mod ray;
 mod rtweeknd;
+mod threadpool;
 mod vector;
 
 use std::sync::Arc;
